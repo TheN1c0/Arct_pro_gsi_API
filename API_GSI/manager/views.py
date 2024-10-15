@@ -16,7 +16,7 @@ class ActualizarStockView(APIView):
     def post(self, request, *args, **kwargs):
         try:
             # Obtenemos los datos del request
-            product_id = request.data.get('idProducto')
+            product_id = request.data.get('id')
             cantidad = request.data.get('cantidad')
 
             # Buscamos el producto en la base de datos
