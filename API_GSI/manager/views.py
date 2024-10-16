@@ -3,8 +3,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Producto, Categoria
+from .models import Producto, Categoria, Pedido
 from rest_framework import serializers
+from .serializers import PedidoSerializer
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -80,3 +81,49 @@ class ActualizarCategorias(APIView):
             return Response({'mensaje': 'Categoría eliminada correctamente'}, status=status.HTTP_204_NO_CONTENT)
         except Categoria.DoesNotExist:
             return Response({'error': 'Categoría no encontrada'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si la categoría no existe
+
+
+
+class ActualizarPedidos(APIView):
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # Obtiene todos los pedidos de la base de datos
+            pedidos = list(Pedido.objects.values('id', 'nombre', 'apellido', 'estado', 'monto_total', 'created_at', 'updated_at'))
+
+            # Devuelve la lista de pedidos como un JSON
+            return Response({'pedidos': pedidos}, status=status.HTTP_200_OK)  # Estado 200 OK
+        except Exception as e:  # Captura cualquier excepción que ocurra
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  # Estado 500 Internal Server Error
+
+    def post(self, request, *args, **kwargs):
+        # Utiliza el serializador para validar y crear un nuevo pedido
+        serializer = PedidoSerializer(data=request.data)
+        if serializer.is_valid():
+            pedido = serializer.save()  # Guarda el nuevo pedido en la base de datos
+            return Response({'mensaje': 'Pedido creado correctamente', 'pedido': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  # Devuelve errores si la validación falla
+    
+    def put(self, request, *args, **kwargs):
+        # Actualiza un pedido existente
+        try:
+            pedido_id = kwargs.get('id')  # Obtiene el ID del pedido de la URL
+            pedido = Pedido.objects.get(id=pedido_id)  # Busca el pedido por ID
+            serializer = PedidoSerializer(pedido, data=request.data, partial=True)  # Serializa con los nuevos datos
+
+            if serializer.is_valid():
+                serializer.save()  # Guarda los cambios en la base de datos
+                return Response({'mensaje': 'Pedido actualizado correctamente', 'pedido': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  # Devuelve errores si la validación falla
+        except Pedido.DoesNotExist:
+            return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el pedido no existe
+
+    def delete(self, request, *args, **kwargs):
+        # Elimina un pedido existente
+        try:
+            pedido_id = kwargs.get('id')  # Obtiene el ID del pedido de la URL
+            pedido = Pedido.objects.get(id=pedido_id)  # Busca el pedido por ID
+            pedido.delete()  # Elimina el pedido
+            return Response({'mensaje': 'Pedido eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
+        except Pedido.DoesNotExist:
+            return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el pedido no existe

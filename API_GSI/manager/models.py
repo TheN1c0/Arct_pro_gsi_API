@@ -41,7 +41,7 @@ class Pedido(models.Model):
         self.save()
 
     def __str__(self):
-        return f"Pedido {self.id} - {self.client_name}"
+        return f"Pedido {self.id} - {self.nombre}"
 
 class DetallePedido(models.Model):
     pedido = models.ForeignKey(Pedido, related_name='detalles', on_delete=models.CASCADE)
