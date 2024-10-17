@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.hashers import make_password
 # Create your models here.
 
 class Categoria(models.Model):
@@ -24,8 +24,6 @@ class Producto(models.Model):
     
     def __str__(self):
         return self.nombre
-
-from django.db import models
 
 class Pedido(models.Model):
     nombre = models.CharField(max_length=255)
@@ -52,3 +50,18 @@ class DetallePedido(models.Model):
 
     def __str__(self):
         return f"Detalle del Pedido {self.pedido.id} - Producto {self.product_id}"
+
+
+class Usuario1(models.Model):
+    id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=150, unique=True)
+    password = models.CharField(max_length=128)
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+    is_admin = models.BooleanField(default=False)  # Campo para distinguir administradores
+
+    def save(self, *args, **kwargs):
+        if self.password:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)

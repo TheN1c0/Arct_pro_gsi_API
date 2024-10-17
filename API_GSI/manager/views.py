@@ -5,7 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Producto, Categoria, Pedido
 from rest_framework import serializers
-from .serializers import PedidoSerializer
+from .serializers import PedidoSerializer. 
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from .models import Usuario1
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -127,3 +130,23 @@ class ActualizarPedidos(APIView):
             return Response({'mensaje': 'Pedido eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
         except Pedido.DoesNotExist:
             return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el pedido no existe
+
+
+class ProtectedView(APIView):
+    permission_classes = [IsAuthenticated]  # Solo accesible con JWT válido
+
+    def get(self, request):
+        return Response({"message": "You are authenticated"})
+
+
+@api_view(['POST'])
+@permission_classes([IsAdmin])  # Solo los administradores pueden acceder a esta vista
+def create_admin_only_view(request):
+    # Lógica para la vista solo para administradores
+    return Response({"message": "Solo administradores pueden ver esto"}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsCollaborator])  # Solo los colaboradores pueden acceder a esta vista
+def create_collaborator_only_view(request):
+    # Lógica para la vista solo para colaboradores
+    return Response({"message": "Solo colaboradores pueden ver esto"}, status=status.HTTP_200_OK)
