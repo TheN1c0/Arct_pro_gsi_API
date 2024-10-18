@@ -57,6 +57,7 @@ SIMPLE_JWT = {
 
  # Reemplaza 'tu_app' con el nombre de tu aplicación
 
+AUTH_USER_MODEL = 'manager.Usuario1'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
