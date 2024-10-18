@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
-# Create your models here.
+from django.contrib.auth.hashers import check_password
 
 class Categoria(models.Model):
     idCategoria = models.AutoField(primary_key=True)  
@@ -65,3 +65,6 @@ class Usuario1(models.Model):
         if self.password:
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
+    
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)

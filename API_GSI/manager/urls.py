@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ActualizarStockView, ActualizarCategorias, ActualizarPedidos
+from .views import ActualizarStockView, ActualizarCategorias, ActualizarPedidos,UsuarioCreateView
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -13,6 +13,6 @@ urlpatterns = [
     path('api/pedidos/<int:id>/', ActualizarPedidos.as_view(), name='actualizar_pedidos'),  # Para PUT y DELETE
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
+    path('api/usuarios/', UsuarioCreateView.as_view(), name='crear_usuario'),
 ]
 
