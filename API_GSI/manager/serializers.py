@@ -42,9 +42,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}  # Asegúrate de que la contraseña no se devuelva en la respuesta
 
     def create(self, validated_data):
-        # Eliminar el campo 'password' de validated_data
-        password = validated_data.pop('password')
+        # Crea el usuario sin eliminar el campo 'password'
         user = Usuario1(**validated_data)
-        user.set_password(password)  # Encriptar la contraseña
-        user.save()
+        user.save()  # Aquí se llama al método save del modelo que encripta la contraseña
         return user
