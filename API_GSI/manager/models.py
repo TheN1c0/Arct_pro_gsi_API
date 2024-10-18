@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
-
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 class Categoria(models.Model):
     idCategoria = models.AutoField(primary_key=True)  
     nombre = models.CharField(max_length=100)
@@ -52,15 +52,39 @@ class DetallePedido(models.Model):
         return f"Detalle del Pedido {self.pedido.id} - Producto {self.product_id}"
 
 
+class Usuario1Manager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        """Crear y devolver un usuario con un correo electrónico y contraseña."""
+        if not email:
+            raise ValueError('Los usuarios deben tener una dirección de correo electrónico')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Crear y devolver un superusuario con un correo electrónico y contraseña."""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        return self.create_user(email, password, **extra_fields)
+
+
+
+
 class Usuario1(models.Model):
     id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=150, unique=True)
     password = models.CharField(max_length=128)
     email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True)
+    USERNAME_FIELD = 'email'
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)  # Campo para distinguir administradores
 
+    REQUIRED_FIELDS = []
     def save(self, *args, **kwargs):
         if self.password:
             self.password = make_password(self.password)
@@ -68,3 +92,16 @@ class Usuario1(models.Model):
     
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
+
+    objects = Usuario1Manager()
+    
+    def __str__(self):
+        return self.email
+
+    @property
+    def is_anonymous(self):
+        return False  # Siempre devuelve False porque este objeto es un usuario autenticado.
+
+    @property
+    def is_authenticated(self):
+        return True  # Siempre devuelve True porque este objeto es un usuario autenticado.
