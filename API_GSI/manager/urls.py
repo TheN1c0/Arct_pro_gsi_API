@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ActualizarStockView, ActualizarCategorias, ActualizarPedidos,UsuarioCreateView
+from .views import ActualizarStockView, ActualizarCategorias, ActualizarPedidos,UsuarioCreateView, ProductosView
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -16,5 +16,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/usuarios/', UsuarioCreateView.as_view(), name='crear_usuario'),
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('api/productos/', ProductosView.as_view(), name='obtener_productos')
+
 ]
 

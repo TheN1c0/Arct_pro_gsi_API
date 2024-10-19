@@ -148,3 +148,11 @@ from .serializers import UsuarioSerializer
 class UsuarioCreateView(generics.CreateAPIView):
     queryset = Usuario1.objects.all()
     serializer_class = UsuarioSerializer
+
+class ProductosView(APIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            productos = list(Producto.objects.values('idProducto', 'nombre', 'descripcion', 'price', 'stock', 'categoria'))
+            return Response({'productos': productos}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
