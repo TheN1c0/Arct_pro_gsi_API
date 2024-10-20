@@ -8,6 +8,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 
 from .models import Producto, Categoria, Pedido, Usuario1
+from .serializers import ProductoSerializer 
+
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -129,6 +131,61 @@ class ActualizarPedidos(APIView):
             return Response({'mensaje': 'Pedido eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
         except Pedido.DoesNotExist:
             return Response({'error': 'Pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el pedido no existe
+
+ # Asegúrate de que este serializer esté definido
+
+class ProductoAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            # Obtiene todos los productos de la base de datos
+            productos = list(Producto.objects.values('idProducto', 'nombre', 'descripcion', 'price', 'stock', 'categoria', 'created_at', 'updated_at'))
+
+            # Devuelve la lista de productos como un JSON
+            return Response({'productos': productos}, status=status.HTTP_200_OK)  # Estado 200 OK
+        except Exception as e:  # Captura cualquier excepción que ocurra
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)  # Estado 500 Internal Server Error
+
+    def post(self, request, *args, **kwargs):
+        # Utiliza el serializador para validar y crear un nuevo producto
+        serializer = ProductoSerializer(data=request.data)
+        if serializer.is_valid():
+            producto = serializer.save()  # Guarda el nuevo producto en la base de datos
+            return Response({'mensaje': 'Producto creado correctamente', 'producto': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  # Devuelve errores si la validación falla
+
+    def put(self, request, *args, **kwargs):
+        # Actualiza un producto existente
+        try:
+            producto_id = kwargs.get('idProducto')  # Obtiene el ID del producto de la URL
+            producto = Producto.objects.get(idProducto=producto_id)  # Busca el producto por ID
+            serializer = ProductoSerializer(producto, data=request.data, partial=True)  # Serializa con los nuevos datos
+
+            if serializer.is_valid():
+                serializer.save()  # Guarda los cambios en la base de datos
+                return Response({'mensaje': 'Producto actualizado correctamente', 'producto': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)  # Devuelve errores si la validación falla
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el producto no existe
+
+    def delete(self, request, *args, **kwargs):
+        # Elimina un producto existente
+        try:
+            producto_id = kwargs.get('idProducto')  # Obtiene el ID del producto de la URL
+            producto = Producto.objects.get(idProducto=producto_id)  # Busca el producto por ID
+            producto.delete()  # Elimina el producto
+            return Response({'mensaje': 'Producto eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
+        except Producto.DoesNotExist:
+            return Response({'error': 'Producto no encontrado'}, status=status.HTTP_404_NOT_FOUND)  # Manejo de error si el producto no existe
+
+
+
+
+
+
+
+
+
 
 # API para obtener el token
 class CustomTokenObtainPairView(TokenObtainPairView):

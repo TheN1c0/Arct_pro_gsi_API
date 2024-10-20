@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Categoria, Pedido, Usuario1
+from .models import Categoria, Pedido, Usuario1,Producto
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -12,6 +12,13 @@ class PedidoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pedido
         fields = '__all__'  # Incluye todos los campos del modelo Pedido
+        
+
+class ProductoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Producto
+        fields = ['idProducto', 'nombre', 'descripcion', 'price', 'stock', 'categoria']  # Incluye todos los campos necesarios
+
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):

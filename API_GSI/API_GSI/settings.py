@@ -27,6 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Esto permite el uso del modelo de usuario por defecto
+]
+
 
 # Application definition
 
@@ -99,6 +103,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        'USER': 'admin',
+        'PASSWORD': '1234',
     }
 }
 
