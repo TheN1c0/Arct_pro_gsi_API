@@ -6,10 +6,16 @@ from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
-
 from .models import Producto, Categoria, Pedido, Usuario1
+<<<<<<< HEAD
 from .serializers import ProductoSerializer 
 
+=======
+from django.http import JsonResponse
+from .models import Producto
+from django.views.decorators.csrf import csrf_exempt
+import json
+>>>>>>> 6a6ad23bfc153fd2f4e79165fba9899c157c859d
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -205,3 +211,50 @@ from .serializers import UsuarioSerializer
 class UsuarioCreateView(generics.CreateAPIView):
     queryset = Usuario1.objects.all()
     serializer_class = UsuarioSerializer
+
+class ProductosView(APIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            productos = list(Producto.objects.values('idProducto', 'nombre', 'descripcion', 'price', 'stock', 'categoria'))
+            return Response({'productos': productos}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+@csrf_exempt
+def productos_api(request):
+    if request.method == 'GET':
+        productos = Producto.objects.all()
+        productos_list = list(productos.values())
+        return JsonResponse({'productos': productos_list}, safe=False)
+
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        nuevo_producto = Producto.objects.create(
+            nombre=data['nombre'],
+            descripcion=data['descripcion'],
+            price=data['price'],
+            stock=data['stock'],
+            categoria_id=1  # Asigna una categoría predeterminada
+        )
+        return JsonResponse({'message': 'Producto creado correctamente'}, status=201)
+
+@csrf_exempt
+def producto_detalle_api(request, producto_id):
+    try:
+        producto = Producto.objects.get(idProducto=producto_id)
+    except Producto.DoesNotExist:
+        return JsonResponse({'message': 'Producto no encontrado'}, status=404)
+
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        producto.nombre = data['nombre']
+        producto.descripcion = data['descripcion']
+        producto.price = data['price']
+        producto.stock = data['stock']
+        producto.save()
+        return JsonResponse({'message': 'Producto actualizado correctamente'})
+
+    if request.method == 'DELETE':
+        producto.delete()
+        return JsonResponse({'message': 'Producto eliminado correctamente'})
