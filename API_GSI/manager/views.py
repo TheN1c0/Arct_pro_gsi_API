@@ -7,15 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 from .models import Producto, Categoria, Pedido, Usuario1
-<<<<<<< HEAD
 from .serializers import ProductoSerializer 
 
-=======
 from django.http import JsonResponse
 from .models import Producto
 from django.views.decorators.csrf import csrf_exempt
 import json
->>>>>>> 6a6ad23bfc153fd2f4e79165fba9899c157c859d
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
