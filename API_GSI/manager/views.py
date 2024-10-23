@@ -14,6 +14,15 @@ from .models import Producto
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.http import JsonResponse
+from .models import Usuario1  # Asegúrate de importar tu modelo de usuario personalizado
+from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.hashers import make_password
+
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Categoria
@@ -209,6 +218,28 @@ class UsuarioCreateView(generics.CreateAPIView):
     queryset = Usuario1.objects.all()
     serializer_class = UsuarioSerializer
 
+class CambiarContrasenaView(APIView):
+    def post(self, request, uid):
+        try:
+            # Obtén el usuario por uid
+            usuario = Usuario1.objects.get(id=uid)
+            nueva_contrasena = request.data.get('password')
+
+            if nueva_contrasena:
+                usuario.password = make_password(nueva_contrasena)
+                usuario.save()
+                return Response({'success': 'Contraseña cambiada con éxito.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'La contraseña no puede estar vacía.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Usuario1.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            # Log del error
+            logger.error(f'Error al cambiar la contraseña: {str(e)}')
+            return Response({'error': 'Error al cambiar la contraseña.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ProductosView(APIView):
     def get(self, request, *args, **kwargs):
         try:
@@ -255,3 +286,38 @@ def producto_detalle_api(request, producto_id):
     if request.method == 'DELETE':
         producto.delete()
         return JsonResponse({'message': 'Producto eliminado correctamente'})
+
+
+@csrf_exempt 
+def enviar_reset_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        # Verificar si el correo electrónico existe en la base de datos
+        try:
+            usuario = Usuario1.objects.get(email=email)
+        except Usuario1.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Correo no registrado'}, status=400)
+
+        # Generar el token de restablecimiento de contraseña
+        token = default_token_generator.make_token(usuario)
+
+        # Crear la URL para el restablecimiento de la contraseña
+        uid = urlsafe_base64_encode(force_bytes(usuario.id))
+        reset_url = f"http://127.0.0.1:8000/restablecer_contrasena/{uid}/{token}"
+
+        # Enviar el correo con el enlace de restablecimiento
+        subject = "Recuperación de Contraseña"
+        message = f"Para restablecer tu contraseña, haz clic en el siguiente enlace: {reset_url}"
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,  # Desde qué correo se enviará
+            [email],
+            fail_silently=False,
+        )
+
+        # Responder al usuario que el correo fue enviado
+        return JsonResponse({'success': True, 'message': 'Revisa tu correo para continuar con el restablecimiento.'})
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)

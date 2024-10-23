@@ -154,3 +154,18 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",  #  frontend
     "http://localhost:8000",   # Alternativa de localhost
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Usar el backend SMTP
+EMAIL_HOST = 'smtp.gmail.com'  # Servidor SMTP de Gmail
+EMAIL_PORT = 587  # Puerto para conexiones seguras con TLS
+EMAIL_USE_TLS = True  # Usar TLS (Transport Layer Security)
+EMAIL_HOST_USER = 'stockmastergsi@gmail.com'  # Tu correo de Gmail
+EMAIL_HOST_PASSWORD = 'ticl xeue ital zkuz'  # Tu contraseña de Gmail (o contraseña de aplicación si tienes verificación en dos pasos)
+DEFAULT_FROM_EMAIL = 'stockmastergsi@gmail.com'  # El correo que se usará como "De" al enviar

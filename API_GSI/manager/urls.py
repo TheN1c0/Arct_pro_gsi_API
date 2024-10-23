@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ActualizarStockView, ActualizarCategorias, ActualizarPedidos,UsuarioCreateView, ProductoAPIView
+from .views import *
 from django.urls import path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -19,7 +19,8 @@ urlpatterns = [
     path('api/usuarios/', UsuarioCreateView.as_view(), name='crear_usuario'),
     
     path('api/productos/', ProductoAPIView.as_view(), name='producto-list'),  # Para obtener la lista de productos o crear uno nuevo
-
+    path('api/enviar_reset_password/', enviar_reset_password, name='enviar_reset_password'),  # Para obtener la lista de productos o crear uno nuevo
+    path('api/cambiar_contrasena/<int:uid>/', CambiarContrasenaView.as_view(), name='cambiar_contrasena'),
 
 
 ]
