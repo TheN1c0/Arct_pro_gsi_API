@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Categoria, Pedido, Usuario1,Producto
+from .models import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -53,3 +53,15 @@ class UsuarioSerializer(serializers.ModelSerializer):
         user = Usuario1(**validated_data)
         user.save()  # Aquí se llama al método save del modelo que encripta la contraseña
         return user
+
+class DetallePedidoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DetallePedido
+        fields = ['id', 'pedido', 'product_id', 'cantidad', 'precio', 'total']
+
+class PedidoSerializer(serializers.ModelSerializer):
+    detalles = DetallePedidoSerializer(many=True)
+
+    class Meta:
+        model = Pedido
+        fields = ['nombre', 'apellido', 'estado', 'monto_total', 'detalles']

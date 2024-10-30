@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework import serializers 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
-from .models import Producto, Categoria, Pedido, Usuario1
+from .models import *
 from .serializers import ProductoSerializer 
 
 from django.http import JsonResponse
@@ -321,3 +321,112 @@ def enviar_reset_password(request):
         return JsonResponse({'success': True, 'message': 'Revisa tu correo para continuar con el restablecimiento.'})
 
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+
+
+from django.db import transaction
+
+
+class CrearPedidoView(APIView):
+
+    # Asegura que la operación sea atómica
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        detalles_data = data.pop('detalles', [])  # Extrae los detalles del pedido
+        estado_pedido = data.get('estado', '').lower()  # Verifica el estado del pedido
+        
+        # Serializa y guarda el pedido principal
+        pedido_serializer = PedidoSerializer(data=data)
+        pedido_serializerEstado =pedido_serializer.is_valid()
+        if pedido_serializer.is_valid():
+            pedido = pedido_serializer.save()
+            
+            for detalle_data in detalles_data:
+                product_id = detalle_data.get('product_id')
+                cantidad = detalle_data.get('cantidad')
+
+                try:
+                    producto = Producto.objects.get(id=product_id)
+                    
+                    # Actualiza el stock según el estado del pedido
+                    if estado_pedido == 'enviado':
+                        if producto.stock < cantidad:
+                            return Response(
+                                {'error': f'Stock insuficiente para el producto {producto.nombre}'},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        producto.stock -= cantidad  # Disminuye stock si el pedido es "enviado"
+                    
+                    elif estado_pedido == 'recibido':
+                        producto.stock += cantidad  # Aumenta stock si el pedido es "recibido"
+                    
+                    producto.save()
+
+                    # Crear el detalle del pedido
+                    DetallePedido.objects.create(
+                        pedido=pedido,
+                        product_id=product_id,
+                        cantidad=cantidad,
+                        precio=detalle_data.get('precio'),
+                        total=detalle_data.get('total')
+                    )
+                except Producto.DoesNotExist:
+                    return Response(
+                        {'error': f'Producto con id {product_id} no encontrado'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+            return Response(
+                {'mensaje': 'Pedido y detalles creados exitosamente'},
+                status=status.HTTP_201_CREATED
+            )
+        
+        return Response({'error': pedido_serializer.errors, 'mensaje':'Error final', 'mensaje':data, 'detalles_data': detalles_data, 'pedido_serializerEstado':pedido_serializerEstado}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DetallePedidoAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            # Obtiene todos los detalles de pedido de la base de datos
+            detalles_pedido = list(DetallePedido.objects.values(
+                'id', 'pedido_id', 'product_id', 'cantidad', 'precio', 'total'
+            ))
+
+            # Devuelve la lista de detalles como JSON
+            return Response({'detalles_pedido': detalles_pedido}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request, *args, **kwargs):
+        # Crea un nuevo detalle de pedido
+        serializer = DetallePedidoSerializer(data=request.data)
+        if serializer.is_valid():
+            detalle_pedido = serializer.save()
+            return Response({'mensaje': 'Detalle de pedido creado correctamente', 'detalle_pedido': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        # Actualiza un detalle de pedido existente
+        try:
+            detalle_id = kwargs.get('id')  # Obtiene el ID del detalle de pedido de la URL
+            detalle_pedido = DetallePedido.objects.get(id=detalle_id)
+            serializer = DetallePedidoSerializer(detalle_pedido, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response({'mensaje': 'Detalle de pedido actualizado correctamente', 'detalle_pedido': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except DetallePedido.DoesNotExist:
+            return Response({'error': 'Detalle de pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, *args, **kwargs):
+        # Elimina un detalle de pedido existente
+        try:
+            detalle_id = kwargs.get('id')
+            detalle_pedido = DetallePedido.objects.get(id=detalle_id)
+            detalle_pedido.delete()
+            return Response({'mensaje': 'Detalle de pedido eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
+        except DetallePedido.DoesNotExist:
+            return Response({'error': 'Detalle de pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)
