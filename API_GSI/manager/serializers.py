@@ -59,9 +59,3 @@ class DetallePedidoSerializer(serializers.ModelSerializer):
         model = DetallePedido
         fields = ['id', 'pedido', 'product_id', 'cantidad', 'precio', 'total']
 
-class PedidoSerializer(serializers.ModelSerializer):
-    detalles = DetallePedidoSerializer(many=True)
-
-    class Meta:
-        model = Pedido
-        fields = ['nombre', 'apellido', 'estado', 'monto_total', 'detalles']
