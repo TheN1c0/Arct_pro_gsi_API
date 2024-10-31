@@ -43,7 +43,7 @@ class Pedido(models.Model):
         return f"Pedido {self.id} - {self.nombre}"
 
 class DetallePedido(models.Model):
-    pedido = models.ForeignKey(Pedido, related_name='detalles_pedido', on_delete=models.CASCADE)
+    pedido = models.ForeignKey(Pedido, related_name='detallesPedido', on_delete=models.CASCADE)
     product_id = models.IntegerField()
     cantidad = models.PositiveIntegerField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)

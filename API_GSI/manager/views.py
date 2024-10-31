@@ -491,11 +491,21 @@ class PedidoAPIView(APIView):
         return Response({'pedidos': serializer.data}, status=status.HTTP_200_OK)
 
 class DetallePedidoAPIView(APIView):
-    def get(self, request, id):
+    def get(self, request, idPedido):
         # Obtener detalles del pedido específico
-        try:
-            detalles = DetallePedido.objects.filter(pedido_id=id)
-            serializer = DetallePedidoSerializer(detalles, many=True)
-            return Response({'detalles': serializer.data}, status=status.HTTP_200_OK)
-        except DetallePedido.DoesNotExist:
+        
+        detalles = DetallePedido.objects.all()  # Revisa si esto es correcto
+        serializer = DetallePedidoSerializer(detalles, many=True)
+        
+        if not detalles.exists():
+            return Response({"message": "No hay detalles para este pedido."}, status=status.HTTP_204_NO_CONTENT)
+
+        
+        return Response(serializer.data)
+        
+        """ detalles = DetallePedido.objects.filter(pedido_id=idPedido)  # Filtrar por pedido_id
+        if not detalles.exists():
             return Response({'error': 'Detalles no encontrados'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = DetallePedidoSerializer(detalles, many=True) """
+"""         return Response({'detalles': serializer.data}, status=status.HTTP_200_OK) """
