@@ -481,3 +481,21 @@ class DetallePedidoAPIView(APIView):
             return Response({'mensaje': 'Detalle de pedido eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
         except DetallePedido.DoesNotExist:
             return Response({'error': 'Detalle de pedido no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PedidoAPIView(APIView):
+    def get(self, request):
+        # Obtener todos los pedidos
+        pedidos = Pedido.objects.all()
+        serializer = PedidoSerializer(pedidos, many=True)
+        return Response({'pedidos': serializer.data}, status=status.HTTP_200_OK)
+
+class DetallePedidoAPIView(APIView):
+    def get(self, request, id):
+        # Obtener detalles del pedido específico
+        try:
+            detalles = DetallePedido.objects.filter(pedido_id=id)
+            serializer = DetallePedidoSerializer(detalles, many=True)
+            return Response({'detalles': serializer.data}, status=status.HTTP_200_OK)
+        except DetallePedido.DoesNotExist:
+            return Response({'error': 'Detalles no encontrados'}, status=status.HTTP_404_NOT_FOUND)

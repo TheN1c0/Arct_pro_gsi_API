@@ -23,7 +23,9 @@ urlpatterns = [
     path('api/enviar_reset_password/', enviar_reset_password, name='enviar_reset_password'),  # Para obtener la lista de productos o crear uno nuevo
     path('api/cambiar_contrasena/<int:uid>/', CambiarContrasenaView.as_view(), name='cambiar_contrasena'),
     path('api/detalles_pedido/', DetallePedidoAPIView.as_view(), name='detalles_pedido'),
-    path('api/crear_pedidos/', CrearPedidoView.as_view(), name='crear_pedidos')
+    path('api/crear_pedidos/', CrearPedidoView.as_view(), name='crear_pedidos'),
+    path('api/ver_pedidos/', PedidoAPIView.as_view(), name='ver_pedidos'),
+    path('api/ver_detalles/<int:idPedido>/', DetallePedidoAPIView.as_view(), name='ver_detalles'),
 
 ]
 
