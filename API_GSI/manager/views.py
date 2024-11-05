@@ -331,7 +331,6 @@ from django.db import transaction
 import json
 
 class CrearPedidoView(APIView):
-
     def post(self, request, *args, **kwargs):
         try:
             # Obtener 'datos_principales' y 'detalles' directamente desde el request
@@ -356,23 +355,7 @@ class CrearPedidoView(APIView):
                 cantidad = detalle_data.get('cantidad')
                 
                 try:
-                    try:
-                        producto = Producto.objects.get(idProducto=idProducto)
-                    except Producto.DoesNotExist:
-                        # Manejo del error: el producto no se encontró
-                        producto = None  # O puedes asignar un valor por defecto o lanzar otra excepción
-                        
-                        return Response(
-                        {'error': 'El producto no existe.','id': idProducto}
-                    )
-                    except Producto.MultipleObjectsReturned:
-                        # Manejo del error: hay múltiples productos que coinciden
-                        producto = None  # O puedes manejar esto de otra manera, como elegir uno
-                        
-                        return Response(
-                        {'error': 'Se encontraron múltiples productos con el mismo idProducto.', 'id':idProducto}
-                    )
-
+                    producto = Producto.objects.get(idProducto=idProducto)
                     
                     # Actualiza el stock del producto según el estado del pedido
                     if estado_pedido == 'enviado':
@@ -388,52 +371,50 @@ class CrearPedidoView(APIView):
                     
                     else:
                         return Response(
-                        {'error':'no sé','cantidad': cantidad,'estado_pedido': estado_pedido, 'producto':idProducto}
-                    )
+                            {'error': 'Estado de pedido no reconocido', 'estado_pedido': estado_pedido},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                     
                     producto.save()
 
                     # Crea el detalle del pedido
-                    try:
-            # Intentar crear el objeto DetallePedido
-                        totalfinal = detalle_data.get('total') * cantidad
-                        DetallePedido.objects.create(
-                            pedido=pedido,
-                            product_id=idProducto,
-                            cantidad=cantidad,
-                            precio=detalle_data.get('total'),
-                            total=totalfinal  # Usa totalfinal directamente
-                        )
-                        return Response({'status': 'Pedido creado exitosamente'}, status=status.HTTP_201_CREATED)
-
-                    except Exception as e:
-                        # Manejar cualquier error y devolver la información
-                        return Response({
-                            'error': str(e),
-                            'totalfinal': totalfinal,
-                            'precio': detalle_data.get('total'),
-                            'cantidad': cantidad,
-                            'pedido': pedido,
-                            'product_id': idProducto
-                        }, status=status.HTTP_400_BAD_REQUEST)
-
+                    totalfinal = detalle_data.get('total') * cantidad
+                    DetallePedido.objects.create(
+                        pedido=pedido,
+                        product_id=idProducto,
+                        cantidad=cantidad,
+                        precio=detalle_data.get('total'),
+                        total=totalfinal
+                    )
 
                 except Producto.DoesNotExist:
                     return Response(
                         {'error': f'Producto con id {idProducto} no encontrado'},
                         status=status.HTTP_404_NOT_FOUND
                     )
+                except Producto.MultipleObjectsReturned:
+                    return Response(
+                        {'error': f'Se encontraron múltiples productos con el mismo id {idProducto}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                except Exception as e:
+                    return Response(
+                        {'error': str(e)},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
+            # Retorna una respuesta exitosa solo después de crear todos los detalles
             return Response(
-                {'mensaje': 'Pedido y detalles creados exitosamente'},
+                {'mensaje': 'Pedido y todos los detalles creados exitosamente'},
                 status=status.HTTP_201_CREATED
             )
 
         # Retorna los errores de validación si los hay
         return Response(
-            {'error': pedido_serializer.errors, 'mensaje': 'Error final'},
+            {'error': pedido_serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
+
 
 
 class DetallePedidoAPIView(APIView):
