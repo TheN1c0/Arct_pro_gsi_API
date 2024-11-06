@@ -417,6 +417,31 @@ class CrearPedidoView(APIView):
 
 
 
+
+class EliminarPedidosView(APIView):
+    def delete(self, request, *args, **kwargs):
+        try:
+            # Borra todos los pedidos
+            pedidos = Pedido.objects.all()
+            cantidad_borrados = pedidos.delete()[0]  # Devuelve una tupla, tomamos la cantidad de borrados
+            
+            if cantidad_borrados > 0:
+                return Response(
+                    {'mensaje': f'Se han eliminado {cantidad_borrados} pedidos y sus detalles.'},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {'mensaje': 'No hay pedidos para eliminar.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 class DetallePedidoAPIView(APIView):
 
     def get(self, request, *args, **kwargs):

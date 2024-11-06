@@ -25,6 +25,7 @@ urlpatterns = [
     path('api/detalles_pedido/', DetallePedidoAPIView.as_view(), name='detalles_pedido'),
     path('api/crear_pedidos/', CrearPedidoView.as_view(), name='crear_pedidos'),
     path('api/ver_pedidos/', PedidoAPIView.as_view(), name='ver_pedidos'),
+    path('api/eliminar_pedidos/', EliminarPedidosView.as_view(), name='eliminar_pedidos'),
     path('api/ver_detalles/<int:idPedido>/', DetallePedidoAPIView.as_view(), name='ver_detalles'),
 
 ]
