@@ -1,38 +1,53 @@
 from django.contrib import admin
-from .models import Producto, Categoria, Pedido, DetallePedido,Usuario1
-# Register your models here.
+from .models import Producto, Categoria, Pedido, DetallePedido, Usuario1
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.admin import UserAdmin
+
+# Registrar tus otros modelos
 admin.site.register(Producto)
 admin.site.register(Categoria)
 admin.site.register(Pedido)
 admin.site.register(DetallePedido)
-admin.site.register(Usuario1)
 
+# Formulario personalizado para la creación de usuarios
+class Usuario1CreationForm(UserCreationForm):
+    class Meta:
+        model = Usuario1
+        fields = ('email', 'username', 'is_active', 'is_staff')  # Campos del modelo a mostrar
 
-class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('idProducto', 'nombre', 'price', 'stock', 'categoria')
+# Formulario personalizado para la edición de usuarios
+class Usuario1ChangeForm(UserChangeForm):
+    class Meta:
+        model = Usuario1
+        fields = ('email', 'username', 'is_active', 'is_staff', 'is_admin')  # Campos para edición
 
-class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ('idCategoria', 'nombre', 'descripcion')
-
-class Usuario1Admin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'is_active', 'is_staff', 'created_at', 'update_at')
-    search_fields = ('username', 'email')
-    list_filter = ('is_active', 'is_staff')
-
-    # Opcional: permite que los usuarios editen el modelo directamente en el admin
+# Personalización del administrador del usuario
+class Usuario1Admin(UserAdmin):
+    # Usamos los formularios personalizados
+    add_form = Usuario1CreationForm
+    form = Usuario1ChangeForm
+    
+    # Campos que aparecerán en el formulario de creación y edición
     fieldsets = (
-        (None, {
-            'fields': ('username', 'email', 'password', 'is_active', 'is_staff')
-        }),
+        (None, {'fields': ('email', 'password')}),
+        ('Información personal', {'fields': ('username', 'is_active', 'is_staff', 'is_admin')}),
+        ('Permisos', {'fields': ('is_superuser', 'user_permissions')}), 
     )
+    
+    # Campos que se mostrarán en la lista del admin
+    list_display = ('email', 'username', 'is_active', 'is_staff', 'is_admin')
+    list_filter = ('is_active', 'is_staff', 'is_admin', 'is_superuser')
+    search_fields = ('email', 'username')
+    ordering = ('email',)
+    filter_horizontal = ('user_permissions',)
+    
+    # Configuración para la creación de superusuario
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2', 'is_active', 'is_staff')}
-        ),
+            'fields': ('email', 'username', 'password1', 'password2', 'is_active', 'is_staff', 'is_admin'),
+        }),
     )
-    ordering = ('email',)
 
-class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'precio')
-    search_fields = ('nombre',)
+# Registrar el modelo Usuario1 con su configuración en el admin
+admin.site.register(Usuario1, Usuario1Admin)
