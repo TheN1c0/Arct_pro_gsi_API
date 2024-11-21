@@ -27,6 +27,8 @@ urlpatterns = [
     path('api/ver_pedidos/', PedidoAPIView.as_view(), name='ver_pedidos'),
     path('api/eliminar_pedidos/', EliminarPedidosView.as_view(), name='eliminar_pedidos'),
     path('api/ver_detalles/<int:idPedido>/', DetallePedidoAPIView.as_view(), name='ver_detalles'),
+    path('api/validate-reset-token/<str:uidb64>/<str:token>/', ValidateResetTokenAPIView.as_view(), name='validate_reset_token'),
+    path('api/reset-password/', ResetPasswordAPIView.as_view(), name='reset_password'),
 
 ]
 

@@ -304,7 +304,7 @@ def enviar_reset_password(request):
 
         # Crear la URL para el restablecimiento de la contraseña
         uid = urlsafe_base64_encode(force_bytes(usuario.id))
-        reset_url = f"http://127.0.0.1:8000/restablecer_contrasena/{uid}/{token}"
+        reset_url = f"http://127.0.0.1:8000/validacion_token/{uid}/{token}"
 
         # Enviar el correo con el enlace de restablecimiento
         subject = "Recuperación de Contraseña"
@@ -515,3 +515,47 @@ class DetallePedidoAPIView(APIView):
         
         serializer = DetallePedidoSerializer(detalles, many=True) """
 """         return Response({'detalles': serializer.data}, status=status.HTTP_200_OK) """
+
+class ValidateResetTokenAPIView(APIView):
+    def get(self, request, uidb64, token):
+        try:
+            # Decodificar el UID
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = Usuario1.objects.get(id=uid)
+
+            # Validar el token
+            token_generator = PasswordResetTokenGenerator()
+            if token_generator.check_token(user, token):
+                return Response({'status': 'valid'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        except (Usuario1.DoesNotExist, ValueError, TypeError):
+            return Response({'status': 'invalid'}, status=status.HTTP_400_BAD_REQUEST)
+
+from rest_framework.views import APIView
+from django.contrib.auth.hashers import make_password
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+
+class ResetPasswordAPIView(APIView):
+    def post(self, request):
+        uidb64 = request.data.get('uidb64')
+        token = request.data.get('token')
+        new_password = request.data.get('password')
+
+        try:
+            # Decodificar el UID
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = Usuario1.objects.get(id=uid)
+
+            # Validar el token nuevamente
+            token_generator = PasswordResetTokenGenerator()
+            if token_generator.check_token(user, token):
+                # Cambiar la contraseña
+                user.password = make_password(new_password)
+                user.save()
+                return Response({'status': 'success'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'status': 'invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        except (Usuario1.DoesNotExist, ValueError, TypeError):
+            return Response({'status': 'error'}, status=status.HTTP_400_BAD_REQUEST)
