@@ -35,7 +35,7 @@ class Usuario1Admin(UserAdmin):
     )
     
     # Campos que se mostrarán en la lista del admin
-    list_display = ('email', 'username', 'is_active', 'is_staff', 'is_admin')
+    list_display = ('id','email', 'username', 'is_active', 'is_staff', 'is_admin')
     list_filter = ('is_active', 'is_staff', 'is_admin', 'is_superuser')
     search_fields = ('email', 'username')
     ordering = ('email',)
