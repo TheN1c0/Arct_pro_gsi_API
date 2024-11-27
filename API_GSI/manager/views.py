@@ -213,84 +213,33 @@ class ProtectedView(APIView):
 from rest_framework import generics
 from .models import Usuario1
 from .serializers import UsuarioSerializer
-from django.utils.http import urlsafe_base64_decode
 
 class UsuarioCreateView(generics.CreateAPIView):
     queryset = Usuario1.objects.all()
     serializer_class = UsuarioSerializer
-    
-
-
-
-from rest_framework_simplejwt.tokens import RefreshToken
-import logging
-
-# Definir el logger
-logger = logging.getLogger(__name__)
 
 class CambiarContrasenaView(APIView):
-    def post(self, request, uid, token):
+    def post(self, request, uid):
         try:
-            # Decodificar el UID
-            id_usuario = int(urlsafe_base64_decode(uid).decode())
+            # Obtén el usuario por uid
+            usuario = Usuario1.objects.get(id=uid)
+            nueva_contrasena = request.data.get('password')
 
-            # Obtener el usuario correspondiente
-            try:
-                usuario = Usuario1.objects.get(id=id_usuario)
-            except Usuario1.DoesNotExist:
-                return Response({'error linea 241': 'Usuario no encontrado.', 'id_usuario':id_usuario, 'request': request.data}, status=status.HTTP_404_NOT_FOUND)
-            # Verificar si el token es válido para el usuario
-            if not default_token_generator.check_token(usuario, token):
-                return Response({'error': 'Token inválido o expirado.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Obtener la nueva contraseña del request
-            try:
-                nueva_contrasena = request.password.get('password')
-            except:
-                return Response({'error': 'nueva contraseña', 'request': request.password}, status=status.HTTP_400_BAD_REQUEST)
-            if usuario and nueva_contrasena:
-                # Datos del usuario que se mantendrán
-                username = usuario.username
-                email = usuario.email
-                is_active = usuario.is_active
-                is_admin = usuario.is_admin
-                is_staff = usuario.is_staff
-                is_superuser = usuario.is_superuser
-
-                # Eliminar al usuario actual
-                usuario.delete()
-
-                # Crear un nuevo usuario con los mismos datos pero con nueva contraseña
-                nuevo_usuario = Usuario1(
-                    username=username,
-                    email=email,
-                    password=nueva_contrasena,  # Nueva contraseña
-                    is_active=is_active,
-                    is_admin=is_admin,
-                    is_staff=is_staff,
-                    is_superuser=is_superuser,
-                )
-                # Guardar el nuevo usuario
-                nuevo_usuario.set_password(nueva_contrasena)
-                nuevo_usuario.save()
-
-                # Recuperar los permisos del usuario original (si los tiene) y asignarlos al nuevo usuario
-                permisos = usuario.user_permissions.all()
-                nuevo_usuario.user_permissions.set(permisos)
-                nuevo_usuario.save()
-
-                # Responder con éxito
+            if nueva_contrasena:
+                usuario.password = make_password(nueva_contrasena)
+                usuario.save()
                 return Response({'success': 'Contraseña cambiada con éxito.'}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'La contraseña no puede estar vacía.'}, status=status.HTTP_400_BAD_REQUEST)
 
         except Usuario1.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado.', 'id_usuario':id_usuario, 'request': request.data}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Usuario no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             # Log del error
-            logger.error(f'Error al cambiar la contraseña: {str(e)} | id_usuario: {id_usuario} | request: {request.data}')
-
+            logger.error(f'Error al cambiar la contraseña: {str(e)}')
             return Response({'error': 'Error al cambiar la contraseña.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class ProductosView(APIView):
     def get(self, request, *args, **kwargs):
         try:
