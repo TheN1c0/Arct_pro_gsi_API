@@ -79,7 +79,7 @@ class Usuario1Manager(BaseUserManager):
         for perm in default_permissions:
             permission = Permission.objects.get(codename=perm)
             user.user_permissions.add(permission)
-        return self.create_user(email, password, **extra_fields)
+        return user
 
 
 
@@ -98,10 +98,11 @@ class Usuario1(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=True)
     REQUIRED_FIELDS = []
     def save(self, *args, **kwargs):
-        if self.password:
+    # Solo encriptar si la contraseña no está ya encriptada
+        if self.password and not self.password.startswith('pbkdf2_'):  # Verifica el prefijo de contraseñas encriptadas por Django
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
-    
+
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
 
